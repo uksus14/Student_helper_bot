@@ -135,7 +135,7 @@ from time import sleep
 timer = 30
 
 
-bot = telebot.TeleBot("5021556582:AAGJj7fGbJt01-2KaJiux0wNjvr9HX3SqGA")
+bot = telebot.TeleBot("1978560750:AAGtA3SO8yh64VjS4hmVu23o_nNrRdSzj7A")
 
 find_func ={"t":lambda e,p:e.find_element(By.TAG_NAME, p),
             "c":lambda e,p:e.find_element(By.CLASS_NAME, p),
@@ -192,6 +192,9 @@ general_cred = sum([sub[1] for sub in credit])+2
 run = False
 
 
+@bot.message_handler(commands=["start"])
+def start(m):
+  bot.send_message(m.chat.id, "Введите свою почту и пароль через пробел чтобы начать")
 
 @bot.message_handler(commands=["i"])
 def info(m):
@@ -212,11 +215,12 @@ def e(m):
     answer(m, "Сейчас выполняется запрос другого человека, подождите и повторите попытку")
     return 0
   run = True
-  try: name, password = t.split("/")
+  try: name, password = t.split()
   except:
-    answer(m, "Имя пользователя и пароль должны быть разделены знаком слеш ('/')")
+    answer(m, "Имя пользователя и пароль должны быть разделены пробелом")
     run = False
     return 0
+  if name[:-8]=="@auca.kg": name = name[:-8]
   driver = webdriver.Chrome(service=Service("C:\\bin\\chromedriver.exe"), options=webdriver.ChromeOptions())
   driver.get("https://tsiauca.edupage.org/login/?msg=3")
   driver.minimize_window()
