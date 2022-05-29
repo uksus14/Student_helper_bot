@@ -2,6 +2,8 @@ from selenium import webdriver
 from time import sleep
 from os import system as o
 char = "\n"
+mail = input("Enter your auca email\n")
+password = input("Enter your password\n")
 f = {"t":lambda e,p:e.find_element_by_tag_name(p),
      "c":lambda e,p:e.find_element_by_class_name(p),
      "i":lambda e,p:e.find_element_by_id(p),
@@ -17,8 +19,8 @@ driver = webdriver.Chrome("C:\\bin\\chromedriver.exe")
 driver.get("https://tsiauca.edupage.org/login/?msg=3")
 driver.minimize_window()
 driver.maximize_window()
-driver.find_element_by_id("login_Login_1e1").send_keys("akylov_a@auca.kg")
-driver.find_element_by_id("login_Login_1e2").send_keys("DropTable1\n")
+driver.find_element_by_id("login_Login_1e1").send_keys(mail)
+driver.find_element_by_id("login_Login_1e2").send_keys(password)
 sleep(1)
 driver.get("https://tsiauca.edupage.org/znamky/?")
 sleep(1)
