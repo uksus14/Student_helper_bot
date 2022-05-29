@@ -3,13 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from time import sleep
-
-
-timer = 30
-
-
 bot = telebot.TeleBot("1978560750:AAGtA3SO8yh64VjS4hmVu23o_nNrRdSzj7A")
-
 find_func ={"t":lambda e,p:e.find_element(By.TAG_NAME, p),
             "c":lambda e,p:e.find_element(By.CLASS_NAME, p),
             "i":lambda e,p:e.find_element(By.ID, p),
@@ -25,7 +19,6 @@ def is_valid_tip(tip):
   if tip.find_element(By.XPATH,"..").get_attribute("original-title").lower().find("<br>")<0 and all(map(lambda _:_ not in "ABCDFP",tip.text)):
     return float(tip.text.split()[0])
   else: return 0
-
 def answer(m,t):
   print(t)
   bot.send_message(m.chat.id, t)
@@ -83,6 +76,7 @@ def info(m):
 @bot.message_handler(content_types="text")
 def e(m):
   global run
+  print(m.text)
   t = m.text.strip()
   if run:
     answer(m, "Сейчас выполняется запрос другого человека, подождите и повторите попытку")
@@ -101,23 +95,44 @@ def e(m):
   driver.find_element(By.ID, "login_Login_1e1").send_keys(f"{name}@auca.kg")
   driver.find_element(By.ID, "login_Login_1e2").send_keys(f"{password.strip()}\n")
   sleep(1)
-  driver.get("https://tsiauca.edupage.org/znamky/?")
-  sleep(1)
   if q(driver, ["cs skgdFormInput"]):
     answer(m, "Неверно введён логин или пароль")
     driver.close()
     driver = []
     run = False
     return 0
+  driver.get("https://tsiauca.edupage.org/dashboard/")
+  sleep(1)
+  answer = "Расписание на сегодня:\n"
+  for day in range(2):
+    timetable = q(driver, ["c dashboard-lessons", "ts div"])
+    for tts in timetable:
+      if not tts.get_attribute("class"):
+        info = [(q(tts, ["cs pn"]), lambda string: f"{string}) "),
+        (q(tts, ["cs time"]), lambda string: f"({'-'.join(string.split())}) "),
+        (q(tts, ["cs subjects"]), lambda string: f"{string}, "),
+        (q(tts, ["cs classrooms"]), lambda string: f"Кабинет: {string}")]
+        for infos in info:
+          if infos[0]:
+            answer += infos[1](infos[0][0].text.strip())
+          else:
+            answer += infos[1]("Пусто")
+        answer += "\n"
+    bot.send_message(m.chat.id, answer)
+    answer = "Расписание на завтра:\n"
+    if not day: q(driver, ["c next"]).click()
+    sleep(0.5)
+  driver.get("https://tsiauca.edupage.org/znamky/?")
+  sleep(1)
   q(driver, ["i bar_mainDiv", "c edubarMainNoSkin", "t div", "c znamkyTable", "t tbody", "c znamkyViewerLoadOlderTd"]).click()
   gs = sorted([(q(elem, ['t td', 't b']).text.split("\n")[0], round(sum([0]+[float(tip.text.split()[0]) for tip in q(elem, ['cs znZnamka'])]), 1)) for elem in q(driver, ["i bar_mainDiv", "c edubarMainNoSkin", "t div", "c znamkyTable", "t tbody", "cs predmetRow"])[1:]], key=lambda _:_[1], reverse=True)
   gs = [(g[0], g[1], grade(g[1]), dict(credit)[g[0].strip()]) for g in gs if g[1]>0]
   length = 1+len(max(gs, key=lambda _:len(_[0]))[0])
   with open(f"additional\\temporary.txt", mode="w", encoding="utf-8") as f: f.write("\n".join([f"{g[0].strip().ljust(length)}|{str(g[1]).ljust(6)}|{g[2].ljust(3)}|{g[3]}" for g in gs])+f"\n{'GPA'.ljust(length)}|{round((sum([grade_to_gpa[g[2]]*g[3] for g in gs])+2)/general_cred, 1)}")
-  driver.close()
-  driver = []
   with open(f"additional\\temporary.txt", "rb") as f: bot.send_document(m.chat.id, f.read(), visible_file_name="grades.txt")
   with open(f"additional\\temporary.txt", mode="w", encoding="utf-8") as f:pass
+  driver.close()
+  driver = []
   run = False
 
 bot.infinity_polling()
