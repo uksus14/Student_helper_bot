@@ -9,6 +9,21 @@ find_func ={"t":lambda e,p:e.find_element(By.TAG_NAME, p),
             "i":lambda e,p:e.find_element(By.ID, p),
             "ts":lambda e,p:e.find_elements(By.TAG_NAME, p),
             "cs":lambda e,p:e.find_elements(By.CLASS_NAME, p)}
+saturday = {"8:00":"8:00",
+            "9:20":"9:15",
+            "9:30":"9:25",
+           "10:50":"10:40",
+           "11:40":"10:50",
+           "13:00":"12:05",
+           "13.10":"12:45",
+           "14.30":"14:00",
+           "14.40":"14:10",
+           "16.00":"15:25",
+           "16.10":"15:35",
+           "17.30":"16:50",
+           "17.40":"17:00",
+           "19.00":"18:15",
+           "Пусто":"Пусто"}
 def q(current, all_path):
   if not all_path: return current
   move_type, move_direction = all_path[0].split()
@@ -103,23 +118,26 @@ def e(m):
     return 0
   driver.get("https://tsiauca.edupage.org/dashboard/")
   sleep(1)
-  answer = "Расписание на сегодня:\n"
+  tt_formated = "Расписание на сегодня:\n"
   for day in range(2):
+    time_format = lambda time: f"{time[0]}-{time[1]}"
+    if q(driver, ["c dashboard-header", "c header", "t span"]).text.split(",")[0].lower() == "сб":
+      time_format = lambda time: f"{saturday[time[0]]}-{saturday[time[1]]}"
     timetable = q(driver, ["c dashboard-lessons", "ts div"])
     for tts in timetable:
       if not tts.get_attribute("class"):
-        info = [(q(tts, ["cs pn"]), lambda string: f"{string}) "),
-        (q(tts, ["cs time"]), lambda string: f"({'-'.join(string.split())}) "),
-        (q(tts, ["cs subjects"]), lambda string: f"{string}, "),
-        (q(tts, ["cs classrooms"]), lambda string: f"Кабинет: {string}")]
+        info = [(q(tts, ["cs pn"]), lambda string: f"{string}) " if string else ""),
+        (q(tts, ["cs time"]), lambda string: f"({time_format(string.split())}) " if string else ""),
+        (q(tts, ["cs subjects"]), lambda string: f"{string}, " if string else ""),
+        (q(tts, ["cs classrooms"]), lambda string: f"Кабинет: {string}" if string else "")]
         for infos in info:
           if infos[0]:
-            answer += infos[1](infos[0][0].text.strip())
+            tt_formated += infos[1](infos[0][0].text.strip())
           else:
-            answer += infos[1]("Пусто")
-        answer += "\n"
-    bot.send_message(m.chat.id, answer)
-    answer = "Расписание на завтра:\n"
+            tt_formated += infos[1]("")
+        tt_formated += "\n"
+    bot.send_message(m.chat.id, tt_formated)
+    tt_formated = "Расписание на завтра:\n"
     if not day: q(driver, ["c next"]).click()
     sleep(0.5)
   driver.get("https://tsiauca.edupage.org/znamky/?")
