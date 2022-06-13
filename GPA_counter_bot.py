@@ -30,7 +30,6 @@ def q(current, all_path):
   return q(find_func[move_type](current, move_direction), all_path[1:])
 
 def is_valid_tip(tip):
-  print(tip.get_attribute('innerHTML'))
   if tip.find_element(By.XPATH,"..").get_attribute("original-title").lower().find("<br>")<0 and all(map(lambda _:_ not in "ABCDFP",tip.text)):
     return float(tip.text.split()[0])
   else: return 0
@@ -136,6 +135,8 @@ def e(m):
           else:
             tt_formated += infos[1]("")
         tt_formated += "\n"
+    if all([letter.lower() not in "йцукенгшщзхъэждлорпавыфячсмитьбюqwertyuiopasdfghjklzxcvbnm" for letter in "\n".join(tt_formated.split("\n")[1:])]):
+      tt_formated = "Расписание на сегодня:\n1)\n2)\n)3\n4)Пар нет\n5)\n6)\n7)"
     bot.send_message(m.chat.id, tt_formated)
     tt_formated = "Расписание на завтра:\n"
     if not day: q(driver, ["c next"]).click()
@@ -143,7 +144,7 @@ def e(m):
   driver.get("https://tsiauca.edupage.org/znamky/?")
   sleep(1)
   q(driver, ["i bar_mainDiv", "c edubarMainNoSkin", "t div", "c znamkyTable", "t tbody", "c znamkyViewerLoadOlderTd"]).click()
-  gs = sorted([(q(elem, ['t td', 't b']).text.split("\n")[0], round(sum([0]+[float(tip.text.split()[0]) for tip in q(elem, ['cs znZnamka'])]), 1)) for elem in q(driver, ["i bar_mainDiv", "c edubarMainNoSkin", "t div", "c znamkyTable", "t tbody", "cs predmetRow"])[1:]], key=lambda _:_[1], reverse=True)
+  gs = sorted([(q(elem, ['t td', 't b']).text.split("\n")[0], round(sum([0]+[is_valid_tip(tip) for tip in q(elem, ['cs znZnamka'])]), 1)) for elem in q(driver, ["i bar_mainDiv", "c edubarMainNoSkin", "t div", "c znamkyTable", "t tbody", "cs predmetRow"])[1:]], key=lambda _:_[1], reverse=True)
   gs = [(g[0], g[1], grade(g[1]), dict(credit)[g[0].strip()]) for g in gs if g[1]>0]
   length = 1+len(max(gs, key=lambda _:len(_[0]))[0])
   with open(f"additional\\temporary.txt", mode="w", encoding="utf-8") as f: f.write("\n".join([f"{g[0].strip().ljust(length)}|{str(g[1]).ljust(6)}|{g[2].ljust(3)}|{g[3]}" for g in gs])+f"\n{'GPA'.ljust(length)}|{round((sum([grade_to_gpa[g[2]]*g[3] for g in gs])+2)/general_cred, 1)}")
@@ -153,4 +154,4 @@ def e(m):
   driver = []
   run = False
 
-bot.polling()
+bot.infinity_polling()
